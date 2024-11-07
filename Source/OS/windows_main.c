@@ -5,6 +5,12 @@
 int APIENTRY 
 WinMain(HINSTANCE Instance, HINSTANCE PreviousInstance, PSTR CommandLine, int ShowCode)
 {
+    file File = {0};
+    PlatformReadFile(&File, "a.txt");
+    PlatformFreeFile(&File);
+
+    Log("Hello!\n");    
+
     Print("%% Hello, world! %%\n");
     Print("%% Hello, world! %%\n");
     Print("%% Hello, world! %%\n");

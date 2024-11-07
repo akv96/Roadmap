@@ -12,6 +12,6 @@ SET common_compiler_flags=/nologo /Od /W4 /Z7 /wd4100 /wd4101 /wd4189 /wd4201 /I
 SET common_linker_flags=/DEBUG:FASTLINK /INCREMENTAL:NO /OPT:REF
 
 PUSHD "%project_dir%\Build"
-IF %ERRORLEVEL% == 0 (CL /LD %common_compiler_flags% "%project_dir%\Source\Include\Library\platform.c" /link /EXPORT:PlatformWriteConsole /EXPORT:PlatformFormatString /EXPORT:PlatformAllocateMemory /EXPORT:PlatformFreeMemory %common_linker_flags% "kernel32.lib")
+IF %ERRORLEVEL% == 0 (CL /LD %common_compiler_flags% "%project_dir%\Source\Include\Library\platform.c" /link /EXPORT:PlatformWriteConsole /EXPORT:PlatformFormatString /EXPORT:PlatformAllocateMemory /EXPORT:PlatformFreeMemory /EXPORT:PlatformReadFile /EXPORT:PlatformFreeFile %common_linker_flags% "kernel32.lib")
 IF %ERRORLEVEL% == 0 (CL %common_compiler_flags% "%project_dir%\Source\OS\windows_main.c" /link %common_linker_flags% "kernel32.lib" "platform.lib")
 POPD

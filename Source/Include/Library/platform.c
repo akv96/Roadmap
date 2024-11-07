@@ -198,3 +198,94 @@ bool PlatformFreeMemory(void *Memory)
     Result = 1;
     return Result;
 }
+
+bool PlatformReadFile(file *File, char *FileName)
+{
+    bool Result = 0;
+
+#ifdef WINDOWS_OS
+    HANDLE FileHandle = CreateFileA(FileName, GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+    if(FileHandle == INVALID_HANDLE_VALUE)
+    {
+        Log("CreateFileA() failed: 0x%X\n", GetLastError());
+        return Result;
+    }
+
+    LARGE_INTEGER FileSize = {0};
+    if(!GetFileSizeEx(FileHandle, &FileSize))
+    {
+        Log("GetFileSizeEx() failed: 0x%X\n", GetLastError());
+        CloseHandle(FileHandle);
+        return Result;
+    }
+    else if(FileSize.QuadPart > MAX_U32)
+    {
+        Log("File size is too big > %u\n", MAX_U32);
+        CloseHandle(FileHandle);
+        return Result;
+    }
+
+    File->Memory = VirtualAlloc(0, FileSize.QuadPart, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    if(!File->Memory)
+    {
+        Log("VirtualAlloc() failed: 0x%X\n", GetLastError());
+        CloseHandle(FileHandle);
+        return Result;
+    }
+
+    DWORD BytesRead = 0;
+    if(!ReadFile(FileHandle, File->Memory, (DWORD)FileSize.QuadPart, &BytesRead, 0))
+    {
+        DWORD Error = GetLastError();
+        if(Error != ERROR_IO_PENDING)
+        {
+            Log("VirtualAlloc() failed: 0x%X\n", GetLastError());
+            VirtualFree(File->Memory, 0, MEM_RELEASE);
+            File->Memory = 0;
+            CloseHandle(FileHandle);
+            return Result;
+        }
+    }
+    else if(BytesRead != FileSize.QuadPart)
+    {
+        Log("Bytes read %u from file is not equal to expected bytes to read %u\n", BytesRead, (u32)FileSize.QuadPart);
+        VirtualFree(File->Memory, 0, MEM_RELEASE);
+        File->Memory = 0;
+        CloseHandle(FileHandle);
+        return Result;
+    }
+
+    File->Size = FileSize.QuadPart;
+
+    CloseHandle(FileHandle);
+#else
+    #error
+#endif
+
+    Result = 1;
+    return Result;
+}
+
+bool PlatformFreeFile(file *File)
+{
+    bool Result = 0;
+
+    if(!File->Memory)
+    {
+        Log("Attempt to free memory that is 0\n");
+        return Result;
+    }
+
+#ifdef WINDOWS_OS
+    if(!VirtualFree(File->Memory, 0, MEM_RELEASE))
+    {
+        Log("VirtualFree() failed: 0x%X\n", GetLastError());
+        return Result;
+    }
+#else
+    #error
+#endif
+
+    Result = 1;
+    return Result;
+}
